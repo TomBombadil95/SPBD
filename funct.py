@@ -1,5 +1,6 @@
 import numpy as np
 import cvxpy as cp
+import matplotlib.pyplot as plt
 
 #This function allows us to choose the shape we want to consider from the Ground-Truth and the Routing Matrix
 def set_data(Q,R,start,end,time0, time1, verb = True):
@@ -29,8 +30,8 @@ def preprocess(Q, R, verb = True):
     return F,T,P,Q,R,Z,Y
 
 #This functions perform the Principal Component Pursuit taking as arguments the shape of interest for the components, matrices to work out
-#the optimization and minimum & maximum for the penalty lambda (default between 0.1-0.3)
-def PCP(F,T,P,Q,R,Z,Y, min_lin = 0.1, max_lin = 0.3):
+#the optimization and minimum & maximum for the penalty lambda (default between 0.1-0.5)
+def PCP(F,T,P,Q,R,Z,Y, min_lin = 0.1, max_lin = 0.5):
     anom = []; nomin = []
     A = cp.Variable((F,T)); X = cp.Variable((F,T)); G = X+A
     constraints = [Z == cp.multiply(P,G),    Y == R@G, A >= 0, X >= 0]
@@ -59,4 +60,17 @@ def PCP(F,T,P,Q,R,Z,Y, min_lin = 0.1, max_lin = 0.3):
     nominal = np.hstack(nomin)
     tot = nominal + anomalies
     return anomalies, nominal, tot
+
+#This function prints 2 subplots taking four argoments from a list as inputs. We use it to compare True traffic with the recovered one.
+def show_plots(ls,i, t0 = 0, t1 = 100):
+    f, axs = plt.subplots(2,2,figsize=(10,6))
+    plt.subplot(2,1,1)
+    plt.plot(ls[0][i, t0:t1], color = 'red', label = 'Anomalies')
+    plt.plot(ls[1][i, t0:t1], color = 'blue', label = 'Nominal')
+    plt.legend()
+    plt.subplot(2,1,2)
+    plt.plot(ls[2][i,t0:t1], color = 'black', label = 'True traffic')
+    plt.plot(ls[3][i, t0:t1], linestyle = (0, (5, 10)), color = 'orange', label ='Anom + Nom')
+    plt.legend()
+    plt.show()
 
